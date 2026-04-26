@@ -1,0 +1,57 @@
+name: ServerRelics
+version: ${project.version}
+main: com.serverrelics.ServerRelics
+api-version: '1.21'
+author: SteadFast SMP
+description: Unique server-wide relics with tracking and restrictions
+folia-supported: false
+
+softdepend:
+  - PlaceholderAPI
+  - BlueMap
+  - PvPManager
+  - AxGraves
+
+commands:
+  relic:
+    description: Manage server relics
+    aliases: [relics, serverrelic]
+    usage: /<command> <help|give|take|locate|spawn|despawn|stats|leaderboard|reload>
+
+permissions:
+  serverrelics.admin:
+    description: Full admin access to relics
+    default: op
+  serverrelics.command.give:
+    description: Give relics to players
+    default: op
+  serverrelics.command.take:
+    description: Take relics from players
+    default: op
+  serverrelics.command.spawn:
+    description: Spawn new relics
+    default: op
+  serverrelics.command.despawn:
+    description: Remove relics from existence
+    default: op
+  serverrelics.command.reload:
+    description: Reload plugin configuration
+    default: op
+  serverrelics.command.locate:
+    description: Locate relics (broadcasts to all)
+    default: op
+  serverrelics.command.stats:
+    description: View relic statistics
+    default: op
+  serverrelics.command.leaderboard:
+    description: View relic leaderboards
+    default: op
+  serverrelics.bypass.pvp:
+    description: Bypass forced PvP while holding relic
+    default: false
+  serverrelics.bypass.storage:
+    description: Bypass storage restrictions (admin)
+    default: false
+  serverrelics.notify:
+    description: Receive relic change notifications
+    default: op

@@ -1,0 +1,212 @@
+# ServerRelics Configuration
+# A framework for unique, trackable server-wide relics
+
+# Database settings (for stats persistence)
+# SQLite is default and works out of the box - no setup required
+# MySQL is optional for servers that prefer centralized databases
+database:
+  type: sqlite  # sqlite (default, no setup) or mysql (requires existing database)
+  sqlite:
+    file: database.db
+  mysql:
+    host: localhost
+    port: 3306
+    database: serverrelics
+    username: minecraft
+    password: "changeme"
+
+# =============================================================================
+# RELICS CONFIGURATION
+# Each relic is defined here with its own settings
+# To add a new relic, copy the crown section and modify it
+# =============================================================================
+
+relics:
+  # The Crown of the Server - a prestigious item that marks its holder
+  crown:
+    enabled: true
+    # The relic class to use (built-in: crown, orb, cloak, scepter)
+    # Or specify a custom class: com.yourplugin.CustomRelic
+    type: crown
+
+    # Display settings
+    display:
+      name: "&6&l♔ Crown of the Server &6&l♔"
+      # Material type: PLAYER_HEAD uses skull texture, others use the material
+      material: PLAYER_HEAD
+      # Base64 skull texture (only used if material is PLAYER_HEAD)
+      skull-texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTFiMGE1YmJjNjk3YzBjNDJhNmNmMWI5YzRjNDQzNWIwNzMyMmZjZTViYjI3ZDgyYjY5MzA4NDNlNWFiN2EwOSJ9fX0="
+      lore:
+        - ""
+        - "&7The one who wears the crown"
+        - "&7must defend it with their life."
+        - ""
+        - "&c⚠ Drops on death"
+        - "&c⚠ Forces PvP enabled"
+        - "&c⚠ Cannot be stored"
+        - ""
+        - "&7Current holder: &f%holder%"
+        - "&7Reign time: &f%reign_time%"
+      # Whether this item glows (enchantment glint)
+      glowing: true
+
+    # Where the relic must be to be "active" (applies effects)
+    # Options: ANY, HEAD, CHEST, LEGS, FEET, MAINHAND, OFFHAND, HOTBAR, INVENTORY
+    active-slot: HEAD
+
+    # Effects applied when relic is in active slot
+    # Format: EFFECT_TYPE:AMPLIFIER (0 = level 1, 1 = level 2, etc.)
+    effects:
+      - "INCREASE_DAMAGE:0"    # Strength I
+      - "SPEED:0"              # Speed I
+      - "HEALTH_BOOST:1"       # +4 max hearts
+      - "GLOWING:0"            # Always visible
+
+    # Restrictions - what this relic prevents
+    restrictions:
+      # Storage restrictions
+      no-chest-storage: true
+      no-ender-chest: true
+      no-shulker-box: true
+      no-item-frame: true
+      no-armor-stand: true
+      no-barrel: true
+      no-hopper: true
+      no-dropper: true
+      no-dispenser: true
+
+      # Drop/transfer restrictions
+      no-drop: false           # Allow dropping (it won't despawn anyway)
+      no-throw: false          # Allow throwing
+      no-trade: true           # Block villager trades with this item
+
+      # Combat restrictions
+      force-pvp: true          # Force PvP enabled while holding
+
+      # Death behavior
+      bypass-graves: true      # Don't go to AxGraves
+      always-drop-on-death: true  # Always drops, ignores keepInventory
+      drop-on-logout: false    # If true, drops immediately on logout
+
+      # Offline holder expiration - drops relic if holder is offline too long
+      offline-expiration:
+        enabled: true
+        days: 10               # Days before relic drops from offline player
+        drop-radius: 50        # Random drop within this many blocks of last location
+
+      # Item behavior
+      never-despawn: true      # Item never despawns when dropped
+      indestructible: true     # Cannot be destroyed by lava, fire, cactus, etc.
+
+    # BlueMap integration
+    bluemap:
+      enabled: true
+      marker-set-id: "relics"
+      marker-set-label: "Server Relics"
+      marker-id: "crown"
+      marker-label: "Crown of the Server"
+      # Icon URL (relative to BlueMap web assets or absolute URL)
+      marker-icon: "assets/icons/crown.png"
+      icon-anchor-x: 16
+      icon-anchor-y: 16
+      update-interval-seconds: 30
+      show-when-dropped: true
+      show-holder-name: true
+
+    # Broadcast messages
+    broadcasts:
+      on-pickup: "&6&l⚔ &e{player} &7has claimed the &6Crown of the Server&7!"
+      on-death-drop: "&6&l⚔ &e{player} &7has fallen! The &6Crown &7lies at &f{location}&7!"
+      on-logout-drop: "&6&l⚔ &e{player} &7logged out! The &6Crown &7dropped at &f{location}&7!"
+      on-offline-expired: "&6&l⚔ &e{player} &7has been absent too long! The &6Crown &7has fallen at &f{location}&7!"
+      on-locate: "&6&l♔ &7Crown Hunt! &e{holder} &7holds the Crown at &f{location}&7!"
+      on-locate-dropped: "&6&l♔ &7The &6Crown &7lies unclaimed at &f{location}&7!"
+      on-locate-offline: "&6&l♔ &7The Crown is held by &e{holder} &7(offline)"
+
+    # Stats to track for this relic
+    stats:
+      track-time-held: true
+      track-kills-while-holding: true
+      track-deaths-while-holding: true
+      track-times-acquired: true
+
+    # Unique - only one can exist at a time
+    unique: true
+
+  # Example of another relic (disabled by default)
+  # Uncomment and modify to add more relics
+  #
+  # orb:
+  #   enabled: false
+  #   type: orb
+  #   display:
+  #     name: "&b&l✦ Orb of Fortune &b&l✦"
+  #     material: ENDER_PEARL
+  #     lore:
+  #       - "&7Luck favors the bold"
+  #     glowing: true
+  #   active-slot: OFFHAND
+  #   effects:
+  #     - "LUCK:2"
+  #   restrictions:
+  #     no-chest-storage: true
+  #     force-pvp: false
+  #     bypass-graves: true
+  #     always-drop-on-death: true
+  #     never-despawn: true
+  #   unique: true
+
+# =============================================================================
+# STATS & LEADERBOARD SETTINGS
+# =============================================================================
+
+stats:
+  # How often to save stats to database (seconds)
+  save-interval: 300
+  # Maximum leaderboard entries to track
+  leaderboard-size: 10
+
+# =============================================================================
+# MESSAGES
+# =============================================================================
+
+messages:
+  prefix: "&6&l[Relics] &r"
+
+  # Error messages
+  no-permission: "&cYou don't have permission to do that."
+  player-not-found: "&cPlayer '{player}' not found."
+  relic-not-found: "&cRelic '{relic}' not found."
+  relic-not-enabled: "&cRelic '{relic}' is not enabled."
+  relic-already-exists: "&cThis relic already exists in the world!"
+  relic-not-in-world: "&cThis relic doesn't exist in the world yet."
+
+  # Success messages
+  relic-spawned: "&aSpawned {relic} at your location."
+  relic-despawned: "&aRemoved {relic} from the world."
+  relic-given: "&aGave {relic} to {player}."
+  relic-taken: "&aTook {relic} from {player}."
+  config-reloaded: "&aConfiguration reloaded."
+
+  # Restriction messages
+  cannot-store: "&cThe {relic} cannot be stored!"
+  cannot-drop: "&cYou cannot drop the {relic}!"
+  pvp-forced: "&cPvP is forced while holding the {relic}!"
+
+  # Stats display
+  stats-header: "&6══════ {player}'s Relic Stats ══════"
+  stats-no-data: "&7No stats recorded yet."
+  stats-time-held: "&7Total time holding {relic}: &f{time}"
+  stats-kills: "&7Kills while holding {relic}: &f{kills}"
+  stats-deaths: "&7Deaths while holding {relic}: &f{deaths}"
+  stats-times-acquired: "&7Times acquired {relic}: &f{count}"
+
+  # Leaderboard display
+  leaderboard-header: "&6══════ {relic} Leaderboard ══════"
+  leaderboard-entry: "&e{rank}. &f{player} &7- &f{value}"
+  leaderboard-empty: "&7No entries yet."
+  leaderboard-footer: "&6══════════════════════════════"
+
+  # Help
+  help-header: "&6══════ ServerRelics Help ══════"
+  help-admin-header: "&6══════ Admin Commands ══════"

@@ -1,0 +1,59 @@
+# Test configuration for ServerRelics
+
+database:
+  type: sqlite
+  sqlite:
+    file: test-database.db
+
+relics:
+  crown:
+    enabled: true
+    type: crown
+    display:
+      name: "&6&l♔ Crown of the Server &6&l♔"
+      material: PLAYER_HEAD
+      skull-texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNzZkMGEwYjE3MjBlMTNiYzQ1OWMzNjY5NjRiYjcxZWQyNjNhNzUzN2E3ZDkxNjE4MWU0YjdjNzY0ZTYwYjEwNyJ9fX0="
+      lore:
+        - ""
+        - "&7Test lore line"
+      glowing: true
+    active-slot: HEAD
+    effects:
+      - "INCREASE_DAMAGE:0"
+      - "SPEED:0"
+    restrictions:
+      no-chest-storage: true
+      no-ender-chest: true
+      no-shulker-box: true
+      no-item-frame: true
+      no-armor-stand: true
+      force-pvp: true
+      bypass-graves: true
+      always-drop-on-death: true
+      drop-on-logout: true
+      never-despawn: true
+      indestructible: true
+    bluemap:
+      enabled: false
+    broadcasts:
+      on-pickup: ""
+      on-death-drop: ""
+      on-logout-drop: ""
+      on-locate: ""
+      on-locate-dropped: ""
+    stats:
+      track-time-held: true
+      track-kills-while-holding: true
+      track-deaths-while-holding: true
+      track-times-acquired: true
+    unique: true
+
+stats:
+  save-interval: 300
+  leaderboard-size: 10
+
+messages:
+  prefix: "&6&l[Relics] &r"
+  no-permission: "&cYou don't have permission to do that."
+  player-not-found: "&cPlayer '{player}' not found."
+  relic-not-found: "&cRelic '{relic}' not found."
