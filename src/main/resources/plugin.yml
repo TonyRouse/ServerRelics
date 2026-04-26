@@ -19,9 +19,38 @@ commands:
     usage: /<command> <help|give|take|locate|spawn|despawn|stats|leaderboard|reload>
 
 permissions:
-  serverrelics.admin:
-    description: Full admin access to relics
+  # Wildcard permissions for easy rank management
+  serverrelics.*:
+    description: All ServerRelics permissions
     default: op
+    children:
+      serverrelics.admin: true
+      serverrelics.user: true
+      serverrelics.bypass.pvp: true
+      serverrelics.bypass.storage: true
+
+  serverrelics.admin:
+    description: Admin commands (give, take, spawn, despawn, drop, reload)
+    default: op
+    children:
+      serverrelics.command.give: true
+      serverrelics.command.take: true
+      serverrelics.command.spawn: true
+      serverrelics.command.despawn: true
+      serverrelics.command.drop: true
+      serverrelics.command.reload: true
+      serverrelics.notify.admin: true
+
+  serverrelics.user:
+    description: User commands (locate, stats, leaderboard)
+    default: true
+    children:
+      serverrelics.command.locate: true
+      serverrelics.command.stats: true
+      serverrelics.command.leaderboard: true
+      serverrelics.notify: true
+
+  # Individual command permissions
   serverrelics.command.give:
     description: Give relics to players
     default: op
@@ -34,24 +63,34 @@ permissions:
   serverrelics.command.despawn:
     description: Remove relics from existence
     default: op
+  serverrelics.command.drop:
+    description: Force drop relic from offline player
+    default: op
   serverrelics.command.reload:
     description: Reload plugin configuration
     default: op
   serverrelics.command.locate:
     description: Locate relics (broadcasts to all)
-    default: op
+    default: true
   serverrelics.command.stats:
     description: View relic statistics
-    default: op
+    default: true
   serverrelics.command.leaderboard:
     description: View relic leaderboards
-    default: op
+    default: true
+
+  # Bypass permissions
   serverrelics.bypass.pvp:
     description: Bypass forced PvP while holding relic
     default: false
   serverrelics.bypass.storage:
-    description: Bypass storage restrictions (admin)
+    description: Bypass storage restrictions
     default: false
+
+  # Notification permissions
   serverrelics.notify:
-    description: Receive relic change notifications
+    description: Receive relic pickup/drop broadcasts
+    default: true
+  serverrelics.notify.admin:
+    description: Receive admin notifications (missing relics, etc.)
     default: op

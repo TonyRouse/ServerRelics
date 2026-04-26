@@ -60,11 +60,31 @@ The plugin comes pre-configured with the "Crown of the Server" - a unique helmet
 
 ## Permissions
 
+### Permission Groups (for LuckPerms)
+
 | Permission | Description | Default |
 |------------|-------------|---------|
-| `serverrelics.admin` | Full admin access | op |
+| `serverrelics.*` | All permissions | op |
+| `serverrelics.admin` | Admin commands (give, take, spawn, despawn, drop, reload) | op |
+| `serverrelics.user` | User commands (locate, stats, leaderboard) + notifications | true |
+
+### Individual Permissions
+
+| Permission | Description | Default |
+|------------|-------------|---------|
+| `serverrelics.command.locate` | Use `/relic locate` | true |
+| `serverrelics.command.stats` | Use `/relic stats` | true |
+| `serverrelics.command.leaderboard` | Use `/relic leaderboard` | true |
+| `serverrelics.command.give` | Use `/relic give` | op |
+| `serverrelics.command.take` | Use `/relic take` | op |
+| `serverrelics.command.spawn` | Use `/relic spawn` | op |
+| `serverrelics.command.despawn` | Use `/relic despawn` | op |
+| `serverrelics.command.drop` | Use `/relic drop` | op |
+| `serverrelics.command.reload` | Use `/relic reload` | op |
 | `serverrelics.bypass.pvp` | Bypass forced PvP while holding relic | false |
-| `serverrelics.notify` | Receive relic change notifications | true |
+| `serverrelics.bypass.storage` | Bypass storage restrictions | false |
+| `serverrelics.notify` | Receive relic broadcasts | true |
+| `serverrelics.notify.admin` | Receive admin notifications (missing relics) | op |
 
 ## Configuration
 
