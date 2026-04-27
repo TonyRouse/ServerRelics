@@ -245,15 +245,108 @@ public abstract class Relic {
         String holderName = holderUuid != null ?
             Bukkit.getOfflinePlayer(holderUuid).getName() : "None";
         String reignTime = formatTime(reignTimeSeconds);
+        String effectsText = formatEffects();
 
         for (String line : loreTemplate) {
-            String processed = line
-                .replace("%holder%", holderName != null ? holderName : "Unknown")
-                .replace("%reign_time%", reignTime);
-            lore.add(TextUtil.colorize(processed));
+            // Handle %effects% placeholder specially - it may expand to multiple lines
+            if (line.contains("%effects%")) {
+                if (!effects.isEmpty()) {
+                    for (String effectLine : effectsText.split("\n")) {
+                        lore.add(TextUtil.colorize(effectLine));
+                    }
+                }
+            } else {
+                String processed = line
+                    .replace("%holder%", holderName != null ? holderName : "Unknown")
+                    .replace("%reign_time%", reignTime);
+                lore.add(TextUtil.colorize(processed));
+            }
         }
 
         meta.lore(lore);
+    }
+
+    /**
+     * Format effects list for display in lore
+     */
+    protected String formatEffects() {
+        if (effects.isEmpty()) return "";
+
+        StringBuilder sb = new StringBuilder();
+        for (PotionEffect effect : effects) {
+            String effectName = formatEffectName(effect.getType().getName());
+            int level = effect.getAmplifier() + 1; // Amplifier 0 = level 1
+            sb.append("&a✦ ").append(effectName);
+            if (level > 1) {
+                sb.append(" ").append(toRoman(level));
+            }
+            sb.append("\n");
+        }
+        // Remove trailing newline
+        if (sb.length() > 0) {
+            sb.setLength(sb.length() - 1);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Format effect name for display (e.g., "INCREASE_DAMAGE" -> "Strength")
+     */
+    private String formatEffectName(String name) {
+        // Map internal names to display names
+        return switch (name.toUpperCase()) {
+            case "INCREASE_DAMAGE" -> "Strength";
+            case "DAMAGE_RESISTANCE" -> "Resistance";
+            case "HEALTH_BOOST" -> "Health Boost";
+            case "ABSORPTION" -> "Absorption";
+            case "FIRE_RESISTANCE" -> "Fire Resistance";
+            case "WATER_BREATHING" -> "Water Breathing";
+            case "NIGHT_VISION" -> "Night Vision";
+            case "INVISIBILITY" -> "Invisibility";
+            case "SLOW_FALLING" -> "Slow Falling";
+            case "CONDUIT_POWER" -> "Conduit Power";
+            case "DOLPHINS_GRACE" -> "Dolphin's Grace";
+            case "HERO_OF_THE_VILLAGE" -> "Hero of the Village";
+            case "LUCK" -> "Luck";
+            case "SPEED" -> "Speed";
+            case "SLOW" -> "Slowness";
+            case "FAST_DIGGING" -> "Haste";
+            case "SLOW_DIGGING" -> "Mining Fatigue";
+            case "JUMP" -> "Jump Boost";
+            case "GLOWING" -> "Glowing";
+            case "REGENERATION" -> "Regeneration";
+            default -> {
+                // Convert SNAKE_CASE to Title Case
+                String[] words = name.toLowerCase().split("_");
+                StringBuilder result = new StringBuilder();
+                for (String word : words) {
+                    if (!word.isEmpty()) {
+                        result.append(Character.toUpperCase(word.charAt(0)))
+                              .append(word.substring(1)).append(" ");
+                    }
+                }
+                yield result.toString().trim();
+            }
+        };
+    }
+
+    /**
+     * Convert number to Roman numerals (for effect levels)
+     */
+    private String toRoman(int number) {
+        return switch (number) {
+            case 1 -> "I";
+            case 2 -> "II";
+            case 3 -> "III";
+            case 4 -> "IV";
+            case 5 -> "V";
+            case 6 -> "VI";
+            case 7 -> "VII";
+            case 8 -> "VIII";
+            case 9 -> "IX";
+            case 10 -> "X";
+            default -> String.valueOf(number);
+        };
     }
 
     /**

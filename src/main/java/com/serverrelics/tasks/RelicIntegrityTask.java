@@ -161,6 +161,9 @@ public class RelicIntegrityTask extends BukkitRunnable {
     }
 
     private boolean playerHasRelic(Player player, Relic relic) {
+        // Check cursor first - item might be being moved between slots
+        if (relic.isThisRelic(player.getItemOnCursor())) return true;
+
         // Check main inventory
         for (ItemStack item : player.getInventory().getContents()) {
             if (relic.isThisRelic(item)) return true;

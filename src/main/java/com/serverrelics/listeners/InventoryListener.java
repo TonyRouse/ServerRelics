@@ -91,9 +91,15 @@ public class InventoryListener implements Listener {
 
         RelicRestrictions restrictions = relic.getRestrictions();
 
+        // Debug: show what restrictions are active
+        plugin.debug("Restrictions for " + relic.getId() + ": chest=" + restrictions.isNoChestStorage() +
+            ", ender=" + restrictions.isNoEnderChest() + ", hopper=" + restrictions.isNoHopper() +
+            ", barrel=" + restrictions.isNoBarrel());
+        plugin.debug("Blocked types: " + restrictions.getBlockedInventoryTypes());
+
         // Check if this inventory type is blocked
         if (!restrictions.isInventoryTypeBlocked(topType)) {
-            plugin.debug("Inventory type " + topType + " not blocked, allowing");
+            plugin.debug("Inventory type " + topType + " not blocked for this relic, allowing");
             handleSlotChange(event, player, relic);
             return;
         }
@@ -356,9 +362,14 @@ public class InventoryListener implements Listener {
     }
 
     /**
-     * Find a specific relic in a player's inventory
+     * Find a specific relic in a player's inventory, armor, offhand, or cursor
      */
     private ItemStack findRelicInInventory(Player player, Relic relic) {
+        // Check cursor first - item might be being moved between slots
+        if (relic.isThisRelic(player.getItemOnCursor())) {
+            return player.getItemOnCursor();
+        }
+        // Check main inventory
         for (ItemStack item : player.getInventory().getContents()) {
             if (relic.isThisRelic(item)) {
                 return item;

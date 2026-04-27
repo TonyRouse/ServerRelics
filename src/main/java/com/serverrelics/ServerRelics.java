@@ -10,9 +10,11 @@ import com.serverrelics.listeners.InventoryListener;
 import com.serverrelics.listeners.ItemListener;
 import com.serverrelics.listeners.JoinQuitListener;
 import com.serverrelics.listeners.PlayerStateListener;
+import com.serverrelics.listeners.PvPCommandListener;
 import com.serverrelics.managers.ConfigManager;
 import com.serverrelics.managers.RelicManager;
 import com.serverrelics.managers.StatsManager;
+import com.serverrelics.managers.StuckVoteManager;
 import com.serverrelics.relics.RelicRegistry;
 import com.serverrelics.tasks.MarkerUpdateTask;
 import com.serverrelics.tasks.OfflineExpirationTask;
@@ -41,6 +43,7 @@ public class ServerRelics extends JavaPlugin {
     private RelicRegistry relicRegistry;
     private RelicManager relicManager;
     private StatsManager statsManager;
+    private StuckVoteManager stuckVoteManager;
 
     private PvPManagerHook pvpManagerHook;
     private BlueMapHook blueMapHook;
@@ -68,6 +71,7 @@ public class ServerRelics extends JavaPlugin {
         relicRegistry = new RelicRegistry(this);
         statsManager = new StatsManager(this);
         relicManager = new RelicManager(this);
+        stuckVoteManager = new StuckVoteManager(this);
 
         // Connect to database
         if (!statsManager.initialize()) {
@@ -152,6 +156,9 @@ public class ServerRelics extends JavaPlugin {
         // Reload relic state
         relicManager.loadState();
 
+        // Clear stuck votes (config may have changed)
+        stuckVoteManager.clearAll();
+
         // Restart tasks
         startTasks();
 
@@ -181,6 +188,7 @@ public class ServerRelics extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new ItemListener(this), this);
         getServer().getPluginManager().registerEvents(new JoinQuitListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerStateListener(this), this);
+        getServer().getPluginManager().registerEvents(new PvPCommandListener(this), this);
     }
 
     private void registerCommands() {
@@ -229,6 +237,13 @@ public class ServerRelics extends JavaPlugin {
         }
     }
 
+    /**
+     * Check if debug mode is enabled
+     */
+    public boolean isDebug() {
+        return configManager != null && configManager.isDebugEnabled();
+    }
+
     // Getters
 
     public static ServerRelics getInstance() {
@@ -249,6 +264,10 @@ public class ServerRelics extends JavaPlugin {
 
     public StatsManager getStatsManager() {
         return statsManager;
+    }
+
+    public StuckVoteManager getStuckVoteManager() {
+        return stuckVoteManager;
     }
 
     public PvPManagerHook getPvPManagerHook() {

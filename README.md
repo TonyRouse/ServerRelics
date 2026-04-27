@@ -161,6 +161,7 @@ Add new relics in `config.yml` under the `relics` section following the crown te
 - **World deleted**: Relic respawns at main world spawn
 - **Relic missing**: Admins notified every 5 minutes
 - **Hopper exploits**: Relics cannot be moved by hoppers/droppers
+- **Item on cursor**: Relic detection includes cursor (prevents delink when moving items)
 
 ## Building from Source
 

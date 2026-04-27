@@ -142,9 +142,13 @@ public class JoinQuitListener implements Listener {
     }
 
     /**
-     * Find a relic in player's inventory
+     * Find a relic in player's inventory, armor, offhand, or cursor
      */
     private ItemStack findRelicInInventory(Player player, Relic relic) {
+        // Check cursor first - item might be being moved between slots
+        if (relic.isThisRelic(player.getItemOnCursor())) {
+            return player.getItemOnCursor();
+        }
         // Check main inventory
         for (ItemStack item : player.getInventory().getContents()) {
             if (relic.isThisRelic(item)) {

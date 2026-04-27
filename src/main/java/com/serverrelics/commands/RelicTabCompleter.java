@@ -23,7 +23,7 @@ public class RelicTabCompleter implements TabCompleter {
     private final ServerRelics plugin;
 
     private static final List<String> SUBCOMMANDS = Arrays.asList(
-        "help", "give", "take", "locate", "spawn", "despawn", "drop", "stats", "leaderboard", "reload"
+        "help", "give", "take", "locate", "stuck", "spawn", "despawn", "drop", "stats", "leaderboard", "reload"
     );
 
     private static final List<String> ADMIN_SUBCOMMANDS = Arrays.asList(
@@ -67,6 +67,7 @@ public class RelicTabCompleter implements TabCompleter {
                     break;
 
                 case "locate":
+                case "stuck":
                 case "spawn":
                 case "despawn":
                 case "drop":

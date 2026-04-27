@@ -4,6 +4,7 @@ import com.serverrelics.ServerRelics;
 import com.serverrelics.relics.Relic;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.UUID;
@@ -45,47 +46,67 @@ public class TimeTrackingTask extends BukkitRunnable {
     }
 
     /**
-     * Update the lore on a relic item in a player's inventory
+     * Update the lore on a relic item in a player's inventory.
+     * Only updates every 60 seconds to avoid visual "bouncing" from frequent meta updates.
      */
     private void updateRelicLore(Player player, Relic relic, UUID holderUuid, long reignTime) {
+        // Only update lore every 60 seconds to reduce visual bouncing
+        // The lore shows time in minutes/hours/days format, so per-second updates aren't needed
+        if (reignTime % 60 != 0 && reignTime > 0) {
+            return;
+        }
+
+        ItemStack item = findRelicItem(player, relic);
+        if (item != null) {
+            relic.updateItemLore(item, holderUuid, reignTime);
+        }
+    }
+
+    /**
+     * Find a relic item in a player's inventory, armor, offhand, or cursor.
+     */
+    private ItemStack findRelicItem(Player player, Relic relic) {
+        // Check cursor first - item might be being moved between slots
+        var cursor = player.getItemOnCursor();
+        if (relic.isThisRelic(cursor)) {
+            return cursor;
+        }
+
         // Check all inventory slots
         for (int i = 0; i < player.getInventory().getSize(); i++) {
             var item = player.getInventory().getItem(i);
             if (relic.isThisRelic(item)) {
-                relic.updateItemLore(item, holderUuid, reignTime);
-                return;
+                return item;
             }
         }
 
         // Check armor slots
         var helmet = player.getInventory().getHelmet();
         if (relic.isThisRelic(helmet)) {
-            relic.updateItemLore(helmet, holderUuid, reignTime);
-            return;
+            return helmet;
         }
 
         var chest = player.getInventory().getChestplate();
         if (relic.isThisRelic(chest)) {
-            relic.updateItemLore(chest, holderUuid, reignTime);
-            return;
+            return chest;
         }
 
         var legs = player.getInventory().getLeggings();
         if (relic.isThisRelic(legs)) {
-            relic.updateItemLore(legs, holderUuid, reignTime);
-            return;
+            return legs;
         }
 
         var boots = player.getInventory().getBoots();
         if (relic.isThisRelic(boots)) {
-            relic.updateItemLore(boots, holderUuid, reignTime);
-            return;
+            return boots;
         }
 
         // Check off-hand
         var offHand = player.getInventory().getItemInOffHand();
         if (relic.isThisRelic(offHand)) {
-            relic.updateItemLore(offHand, holderUuid, reignTime);
+            return offHand;
         }
+
+        return null;
     }
 }

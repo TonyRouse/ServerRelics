@@ -41,9 +41,13 @@ relics:
         - "&7The one who wears the crown"
         - "&7must defend it with their life."
         - ""
-        - "&c⚠ Drops on death"
-        - "&c⚠ Forces PvP enabled"
-        - "&c⚠ Cannot be stored"
+        - "&6&lBonuses:"
+        - "%effects%"
+        - ""
+        - "&c&lRestrictions:"
+        - "&c⚔ Drops on death"
+        - "&c⚔ Forces PvP enabled"
+        - "&c⚔ Cannot be stored"
         - ""
         - "&7Current holder: &f%holder%"
         - "&7Reign time: &f%reign_time%"
@@ -157,6 +161,23 @@ relics:
   #   unique: true
 
 # =============================================================================
+# STUCK RELIC VOTING
+# Allows players to vote that a dropped relic is stuck/inaccessible
+# When enough votes are cast, the relic is relocated to spawn
+# =============================================================================
+
+stuck:
+  enabled: true
+  # Number of unique players required to vote before relic is relocated
+  votes-required: 2
+  # Time window in minutes - all votes must be within this period
+  vote-window-minutes: 10
+  # Per-player cooldown in minutes before they can vote again
+  cooldown-minutes: 60
+  # Where to relocate the relic: "spawn" or specific coordinates "world,x,y,z"
+  relocate-to: spawn
+
+# =============================================================================
 # STATS & LEADERBOARD SETTINGS
 # =============================================================================
 
@@ -206,6 +227,15 @@ messages:
   leaderboard-entry: "&e{rank}. &f{player} &7- &f{value}"
   leaderboard-empty: "&7No entries yet."
   leaderboard-footer: "&6══════════════════════════════"
+
+  # Stuck voting messages
+  stuck-disabled: "&cThe stuck vote feature is disabled."
+  stuck-not-dropped: "&cThe {relic} is not dropped - it cannot be voted as stuck."
+  stuck-cooldown: "&cYou must wait {time} before voting again."
+  stuck-already-voted: "&cYou have already voted that this relic is stuck."
+  stuck-vote-cast: "&aYour vote has been recorded. &7({current}/{required} votes)"
+  stuck-vote-broadcast: "&6&l[Relics] &e{player} &7voted that the &6{relic} &7is stuck! &7({current}/{required} votes)"
+  stuck-relocated: "&6&l[Relics] &7The &6{relic} &7has been relocated to &f{location}&7!"
 
   # Help
   help-header: "&6══════ ServerRelics Help ══════"

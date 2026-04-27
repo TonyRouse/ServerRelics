@@ -2,6 +2,7 @@ package com.serverrelics.commands;
 
 import com.serverrelics.ServerRelics;
 import com.serverrelics.managers.StatsManager;
+import com.serverrelics.managers.StuckVoteManager;
 import com.serverrelics.relics.Relic;
 import com.serverrelics.util.TextUtil;
 import net.kyori.adventure.text.Component;
@@ -63,6 +64,7 @@ public class RelicCommand implements CommandExecutor {
             case "despawn" -> handleDespawn(sender, args);
             case "stats" -> handleStats(sender, args);
             case "leaderboard", "lb", "top" -> handleLeaderboard(sender, args);
+            case "stuck" -> handleStuck(sender, args);
             case "reload" -> handleReload(sender);
             default -> {
                 sendMessage(sender, "&cUnknown subcommand. Use /relic help");
@@ -77,6 +79,7 @@ public class RelicCommand implements CommandExecutor {
     private void showHelp(CommandSender sender) {
         sendMessage(sender, plugin.getConfigManager().getRawMessage("help-header"));
         sendMessage(sender, "&e/relic locate [relic] &7- Broadcast relic location");
+        sendMessage(sender, "&e/relic stuck [relic] &7- Vote that a dropped relic is stuck");
         sendMessage(sender, "&e/relic stats [player] &7- View player stats");
         sendMessage(sender, "&e/relic leaderboard [relic] &7- View top holders");
 
@@ -496,6 +499,93 @@ public class RelicCommand implements CommandExecutor {
 
         plugin.reload();
         sendMessage(sender, plugin.getConfigManager().getMessage("config-reloaded"));
+
+        return true;
+    }
+
+    /**
+     * Handle /relic stuck [relic]
+     * Allows players to vote that a dropped relic is stuck/inaccessible
+     */
+    private boolean handleStuck(CommandSender sender, String[] args) {
+        if (!hasPermission(sender, "serverrelics.command.stuck")) return true;
+
+        if (!(sender instanceof Player player)) {
+            sendMessage(sender, "&cThis command can only be used by players.");
+            return true;
+        }
+
+        // Default to crown if no relic specified
+        String relicId = args.length > 1 ? args[1].toLowerCase() : "crown";
+
+        Relic relic = plugin.getRelicRegistry().getRelic(relicId);
+        if (relic == null || !relic.isEnabled()) {
+            sendMessage(sender, plugin.getConfigManager().getMessage("relic-not-found")
+                .replace("{relic}", relicId));
+            return true;
+        }
+
+        // Cast vote
+        StuckVoteManager.VoteResult result = plugin.getStuckVoteManager().castVote(player, relicId);
+        String relicName = TextUtil.stripColor(relic.getDisplayName());
+
+        switch (result.getType()) {
+            case DISABLED:
+                sendMessage(sender, plugin.getConfigManager().getMessage("stuck-disabled"));
+                break;
+
+            case NOT_IN_WORLD:
+                sendMessage(sender, plugin.getConfigManager().getMessage("relic-not-in-world"));
+                break;
+
+            case NOT_DROPPED:
+                sendMessage(sender, plugin.getConfigManager().getMessage("stuck-not-dropped")
+                    .replace("{relic}", relicName));
+                break;
+
+            case ON_COOLDOWN:
+                String cooldownTime = TextUtil.formatTime(result.getCooldownRemaining() / 1000);
+                sendMessage(sender, plugin.getConfigManager().getMessage("stuck-cooldown")
+                    .replace("{time}", cooldownTime));
+                break;
+
+            case ALREADY_VOTED:
+                sendMessage(sender, plugin.getConfigManager().getMessage("stuck-already-voted"));
+                break;
+
+            case VOTE_CAST:
+                // Notify the voter
+                sendMessage(sender, plugin.getConfigManager().getMessage("stuck-vote-cast")
+                    .replace("{current}", String.valueOf(result.getCurrentVotes()))
+                    .replace("{required}", String.valueOf(result.getRequiredVotes())));
+
+                // Broadcast to all players
+                String broadcastMsg = plugin.getConfigManager().getMessage("stuck-vote-broadcast")
+                    .replace("{player}", player.getName())
+                    .replace("{relic}", relicName)
+                    .replace("{current}", String.valueOf(result.getCurrentVotes()))
+                    .replace("{required}", String.valueOf(result.getRequiredVotes()));
+
+                for (Player p : Bukkit.getOnlinePlayers()) {
+                    if (!p.equals(player) && p.hasPermission("serverrelics.notify")) {
+                        p.sendMessage(TextUtil.colorize(broadcastMsg));
+                    }
+                }
+                break;
+
+            case RELOCATED:
+                // Broadcast relocation to everyone
+                String relocateMsg = plugin.getConfigManager().getMessage("stuck-relocated")
+                    .replace("{relic}", relicName)
+                    .replace("{location}", formatLocation(result.getNewLocation()));
+
+                for (Player p : Bukkit.getOnlinePlayers()) {
+                    if (p.hasPermission("serverrelics.notify")) {
+                        p.sendMessage(TextUtil.colorize(relocateMsg));
+                    }
+                }
+                break;
+        }
 
         return true;
     }

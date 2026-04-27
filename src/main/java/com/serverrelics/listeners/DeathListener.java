@@ -50,6 +50,10 @@ public class DeathListener implements Listener {
                 // Remove from normal drops (so graves don't get it)
                 dropIterator.remove();
 
+                // Also remove from player's inventory/armor to prevent duplication
+                // by grave plugins that read directly from inventory
+                removeRelicFromPlayer(player, item);
+
                 // Spawn the item manually
                 Location dropLoc = getDropLocation(player);
                 spawnRelicDrop(relic, item, dropLoc, player, "death");
@@ -59,6 +63,33 @@ public class DeathListener implements Listener {
         // Also check armor slots and inventory for relics that might not be in drops
         // (e.g., if keepInventory is on)
         checkAndDropRelicsFromInventory(player, event);
+    }
+
+    /**
+     * Remove a relic item from a player's inventory and armor slots.
+     * This prevents grave plugins from duplicating the item.
+     */
+    private void removeRelicFromPlayer(Player player, ItemStack relicItem) {
+        // Check main inventory
+        player.getInventory().remove(relicItem);
+
+        // Check armor slots - need to handle separately since remove() doesn't check armor
+        ItemStack[] armor = player.getInventory().getArmorContents();
+        boolean armorChanged = false;
+        for (int i = 0; i < armor.length; i++) {
+            if (relicItem.equals(armor[i])) {
+                armor[i] = null;
+                armorChanged = true;
+            }
+        }
+        if (armorChanged) {
+            player.getInventory().setArmorContents(armor);
+        }
+
+        // Check offhand
+        if (relicItem.equals(player.getInventory().getItemInOffHand())) {
+            player.getInventory().setItemInOffHand(null);
+        }
     }
 
     /**

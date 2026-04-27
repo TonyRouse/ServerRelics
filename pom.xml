@@ -92,12 +92,7 @@
             <version>5.11.0</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.github.seeseemelk</groupId>
-            <artifactId>MockBukkit-v1.20</artifactId>
-            <version>3.86.0</version>
-            <scope>test</scope>
-        </dependency>
+        <!-- MockBukkit removed - using Mockito for better compatibility -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
