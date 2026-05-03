@@ -43,6 +43,10 @@ public class RelicManager {
     // Last known location of offline holder
     private final Map<String, Location> holderLastLocation;
 
+    // Previous holder tracking (for pickup cooldown)
+    private final Map<String, UUID> previousHolders;
+    private final Map<String, Long> previousHolderDropTimes;
+
     public RelicManager(ServerRelics plugin) {
         this.plugin = plugin;
         this.stateFile = new File(plugin.getDataFolder(), "state.yml");
@@ -52,6 +56,8 @@ public class RelicManager {
         this.droppedItemEntities = new HashMap<>();
         this.holderOfflineSince = new HashMap<>();
         this.holderLastLocation = new HashMap<>();
+        this.previousHolders = new HashMap<>();
+        this.previousHolderDropTimes = new HashMap<>();
     }
 
     /**
@@ -120,6 +126,23 @@ public class RelicManager {
                         holderLastLocation.put(relicId, new Location(world, x, y, z));
                     }
                 }
+
+                // Load previous holder (for pickup cooldown)
+                String prevHolderStr = relicState.getString("previous-holder");
+                if (prevHolderStr != null && !prevHolderStr.isEmpty()) {
+                    try {
+                        UUID prevHolderUuid = UUID.fromString(prevHolderStr);
+                        previousHolders.put(relicId, prevHolderUuid);
+
+                        long dropTime = relicState.getLong("previous-holder-drop-time", 0);
+                        if (dropTime > 0) {
+                            previousHolderDropTimes.put(relicId, dropTime);
+                        }
+                        plugin.debug("Loaded previous holder for " + relicId + ": " + prevHolderUuid);
+                    } catch (IllegalArgumentException e) {
+                        plugin.getLogger().warning("Invalid previous holder UUID for " + relicId);
+                    }
+                }
             }
 
             plugin.getLogger().info("Loaded relic state from file.");
@@ -172,6 +195,16 @@ public class RelicManager {
                     config.set(path + "holder-last-y", lastLoc.getY());
                     config.set(path + "holder-last-z", lastLoc.getZ());
                 }
+
+                // Save previous holder (for pickup cooldown)
+                UUID prevHolder = previousHolders.get(relicId);
+                if (prevHolder != null) {
+                    config.set(path + "previous-holder", prevHolder.toString());
+                    Long dropTime = previousHolderDropTimes.get(relicId);
+                    if (dropTime != null) {
+                        config.set(path + "previous-holder-drop-time", dropTime);
+                    }
+                }
             }
 
             config.save(stateFile);
@@ -209,6 +242,10 @@ public class RelicManager {
         // Clear dropped location since it's now held
         droppedLocations.remove(relicId);
         droppedItemEntities.remove(relicId);
+
+        // Clear previous holder tracking since someone picked it up
+        previousHolders.remove(relicId);
+        previousHolderDropTimes.remove(relicId);
 
         // Handle previous holder
         if (previousHolder != null && !previousHolder.equals(playerUuid)) {
@@ -261,6 +298,9 @@ public class RelicManager {
         UUID previousHolder = holders.remove(relicId);
 
         if (previousHolder != null) {
+            // Track previous holder for pickup cooldown
+            previousHolders.put(relicId, previousHolder);
+            previousHolderDropTimes.put(relicId, System.currentTimeMillis());
             // Save their time - wrapped in try-catch to not break drop handling
             try {
                 plugin.getStatsManager().finalizeHoldTime(previousHolder, relicId);
@@ -703,5 +743,64 @@ public class RelicManager {
         UUID holder = getHolder(relicId);
         if (holder == null) return null;
         return Bukkit.getOfflinePlayer(holder).getName();
+    }
+
+    // ==================== Previous Holder Pickup Cooldown ====================
+
+    /**
+     * Get the previous holder of a relic
+     */
+    public UUID getPreviousHolder(String relicId) {
+        return previousHolders.get(relicId.toLowerCase());
+    }
+
+    /**
+     * Get when the previous holder dropped the relic
+     */
+    public Long getPreviousHolderDropTime(String relicId) {
+        return previousHolderDropTimes.get(relicId.toLowerCase());
+    }
+
+    /**
+     * Clear previous holder tracking (when someone else picks it up)
+     */
+    public void clearPreviousHolder(String relicId) {
+        relicId = relicId.toLowerCase();
+        previousHolders.remove(relicId);
+        previousHolderDropTimes.remove(relicId);
+    }
+
+    /**
+     * Check if a player can pick up a relic (respects previous holder cooldown)
+     * @return remaining cooldown in seconds, or 0 if can pickup
+     */
+    public int getRemainingPickupCooldown(String relicId, UUID playerUuid) {
+        relicId = relicId.toLowerCase();
+
+        Relic relic = plugin.getRelicRegistry().getRelic(relicId);
+        if (relic == null) return 0;
+
+        int cooldownSeconds = relic.getRestrictions().getPreviousHolderPickupCooldown();
+        if (cooldownSeconds <= 0) return 0;
+
+        UUID previousHolder = previousHolders.get(relicId);
+        if (previousHolder == null || !previousHolder.equals(playerUuid)) {
+            return 0; // Not the previous holder, can pickup
+        }
+
+        Long dropTime = previousHolderDropTimes.get(relicId);
+        if (dropTime == null) return 0;
+
+        long elapsedSeconds = (System.currentTimeMillis() - dropTime) / 1000;
+        long remaining = cooldownSeconds - elapsedSeconds;
+
+        return remaining > 0 ? (int) remaining : 0;
+    }
+
+    /**
+     * Check if a player can pick up a relic
+     */
+    public boolean canPickup(String relicId, UUID playerUuid) {
+        return getRemainingPickupCooldown(relicId, playerUuid) == 0;
     }
 }

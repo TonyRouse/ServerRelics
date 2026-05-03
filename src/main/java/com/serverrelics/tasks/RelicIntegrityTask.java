@@ -95,10 +95,26 @@ public class RelicIntegrityTask extends BukkitRunnable {
             // Check if the item entity still exists
             Item itemEntity = plugin.getRelicManager().getDroppedItemEntity(relicId);
             if (itemEntity == null || !itemEntity.isValid() || itemEntity.isDead()) {
-                // Item entity is gone! Relic is lost
-                notifyAdminsRelicLost(relicId, "Dropped item entity no longer exists at " +
+                // Item entity is gone (likely server restart) - respawn it at the saved location
+                plugin.getLogger().warning("Dropped " + relicId + " item entity missing - respawning at " +
                     formatLocation(droppedLoc));
+
+                // Clear old tracking first
                 plugin.getRelicManager().clearDroppedLocation(relicId);
+
+                // Respawn the relic at the saved location
+                Item newItem = plugin.getRelicManager().spawnRelic(relicId, droppedLoc);
+                if (newItem != null) {
+                    // Notify admins
+                    for (Player p : Bukkit.getOnlinePlayers()) {
+                        if (p.hasPermission("serverrelics.admin")) {
+                            p.sendMessage(TextUtil.colorize("&6[Relics] &eRespawned " + relicId +
+                                " at " + formatLocation(droppedLoc) + " (item entity was missing)"));
+                        }
+                    }
+                } else {
+                    notifyAdminsRelicLost(relicId, "Failed to respawn at " + formatLocation(droppedLoc));
+                }
             }
         }
     }

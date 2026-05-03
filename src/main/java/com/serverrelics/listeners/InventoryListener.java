@@ -19,6 +19,10 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Villager;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 /**
  * Handles inventory-related restrictions for relics.
  * Blocks storage in containers, item frames, armor stands, etc.
@@ -27,8 +31,25 @@ public class InventoryListener implements Listener {
 
     private final ServerRelics plugin;
 
+    // Cooldown for storage failure messages (player UUID -> last message time)
+    private final Map<UUID, Long> storageMessageCooldowns = new HashMap<>();
+    private static final long MESSAGE_COOLDOWN_MS = 2000; // 2 seconds between messages
+
     public InventoryListener(ServerRelics plugin) {
         this.plugin = plugin;
+    }
+
+    /**
+     * Check if a player can receive a storage failure message (respects cooldown)
+     */
+    private boolean canSendStorageMessage(UUID playerId) {
+        long now = System.currentTimeMillis();
+        Long lastMessage = storageMessageCooldowns.get(playerId);
+        if (lastMessage == null || now - lastMessage >= MESSAGE_COOLDOWN_MS) {
+            storageMessageCooldowns.put(playerId, now);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -396,9 +417,11 @@ public class InventoryListener implements Listener {
     }
 
     /**
-     * Send the "cannot store" message to a player
+     * Send the "cannot store" message to a player (with cooldown to prevent spam)
      */
     private void sendCannotStoreMessage(Player player, Relic relic) {
+        if (!canSendStorageMessage(player.getUniqueId())) return;
+
         String message = plugin.getConfigManager().getMessage("cannot-store")
             .replace("{relic}", TextUtil.stripColor(relic.getDisplayName()));
         player.sendMessage(TextUtil.colorize(message));

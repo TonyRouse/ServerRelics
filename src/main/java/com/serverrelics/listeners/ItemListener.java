@@ -17,6 +17,10 @@ import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 /**
  * Handles item-related events for relics.
  * - Prevents despawning
@@ -28,8 +32,25 @@ public class ItemListener implements Listener {
 
     private final ServerRelics plugin;
 
+    // Cooldown for pickup failure messages (player UUID -> last message time)
+    private final Map<UUID, Long> pickupMessageCooldowns = new HashMap<>();
+    private static final long MESSAGE_COOLDOWN_MS = 3000; // 3 seconds between messages
+
     public ItemListener(ServerRelics plugin) {
         this.plugin = plugin;
+    }
+
+    /**
+     * Check if a player can receive a pickup failure message (respects cooldown)
+     */
+    private boolean canSendPickupMessage(UUID playerId) {
+        long now = System.currentTimeMillis();
+        Long lastMessage = pickupMessageCooldowns.get(playerId);
+        if (lastMessage == null || now - lastMessage >= MESSAGE_COOLDOWN_MS) {
+            pickupMessageCooldowns.put(playerId, now);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -76,7 +97,7 @@ public class ItemListener implements Listener {
     }
 
     /**
-     * Block relic pickup for creative mode players
+     * Block relic pickup for creative mode players and previous holders on cooldown
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onCreativePickup(EntityPickupItemEvent event) {
@@ -88,15 +109,52 @@ public class ItemListener implements Listener {
         // Block creative mode players
         if (player.getGameMode() == GameMode.CREATIVE) {
             event.setCancelled(true);
-            player.sendMessage(TextUtil.colorize("&cYou cannot pick up relics in creative mode!"));
+            if (canSendPickupMessage(player.getUniqueId())) {
+                player.sendMessage(TextUtil.colorize("&cYou cannot pick up relics in creative mode!"));
+            }
             return;
         }
 
         // Check if inventory has space (need at least one empty slot)
         if (player.getInventory().firstEmpty() == -1) {
             event.setCancelled(true);
-            player.sendMessage(TextUtil.colorize("&cYour inventory is full! Make room to pick up the relic."));
+            if (canSendPickupMessage(player.getUniqueId())) {
+                player.sendMessage(TextUtil.colorize("&cYour inventory is full! Make room to pick up the relic."));
+            }
+            return;
         }
+
+        // Check previous holder pickup cooldown
+        Relic relic = plugin.getRelicRegistry().getRelicFromItem(itemStack);
+        if (relic != null) {
+            int remainingCooldown = plugin.getRelicManager().getRemainingPickupCooldown(
+                relic.getId(), player.getUniqueId());
+            if (remainingCooldown > 0) {
+                event.setCancelled(true);
+                if (canSendPickupMessage(player.getUniqueId())) {
+                    String timeFormatted = formatCooldownTime(remainingCooldown);
+                    String message = plugin.getConfigManager().getMessage("previous-holder-cooldown")
+                        .replace("{time}", timeFormatted)
+                        .replace("{relic}", TextUtil.stripColor(relic.getDisplayName()));
+                    player.sendMessage(TextUtil.colorize(message));
+                }
+            }
+        }
+    }
+
+    /**
+     * Format cooldown time into human-readable string
+     */
+    private String formatCooldownTime(int seconds) {
+        if (seconds >= 60) {
+            int minutes = seconds / 60;
+            int secs = seconds % 60;
+            if (secs > 0) {
+                return minutes + "m " + secs + "s";
+            }
+            return minutes + "m";
+        }
+        return seconds + "s";
     }
 
     /**

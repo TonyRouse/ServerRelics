@@ -102,6 +102,10 @@ relics:
       never-despawn: true      # Item never despawns when dropped
       indestructible: true     # Cannot be destroyed by lava, fire, cactus, etc.
 
+      # Pickup cooldown - prevents previous holder from immediately reclaiming
+      # after death (blocks /back exploit). Time in seconds. 0 = disabled.
+      previous-holder-pickup-cooldown: 300  # 5 minutes
+
     # BlueMap integration
     bluemap:
       enabled: true
@@ -213,6 +217,7 @@ messages:
   cannot-store: "&cThe {relic} cannot be stored!"
   cannot-drop: "&cYou cannot drop the {relic}!"
   pvp-forced: "&cPvP is forced while holding the {relic}!"
+  previous-holder-cooldown: "&cYou must wait {time} before reclaiming the {relic}!"
 
   # Stats display
   stats-header: "&6══════ {player}'s Relic Stats ══════"

@@ -45,6 +45,9 @@ public class RelicRestrictions {
     private int offlineExpirationDays;
     private int offlineDropRadius;
 
+    // Pickup cooldown for previous holder (seconds)
+    private int previousHolderPickupCooldown;
+
     // Cached set of blocked inventory types
     private Set<InventoryType> blockedInventoryTypes;
 
@@ -94,6 +97,9 @@ public class RelicRestrictions {
             r.offlineExpirationDays = offlineSection.getInt("days", 10);
             r.offlineDropRadius = offlineSection.getInt("drop-radius", 50);
         }
+
+        // Previous holder pickup cooldown (in seconds, default 0 = no cooldown)
+        r.previousHolderPickupCooldown = section.getInt("previous-holder-pickup-cooldown", 0);
 
         // Build blocked inventory types set
         r.buildBlockedInventoryTypes();
@@ -239,5 +245,9 @@ public class RelicRestrictions {
 
     public int getOfflineDropRadius() {
         return offlineDropRadius;
+    }
+
+    public int getPreviousHolderPickupCooldown() {
+        return previousHolderPickupCooldown;
     }
 }
